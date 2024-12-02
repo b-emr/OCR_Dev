@@ -72,6 +72,7 @@ def readCsv(filepath):
 def getCoordinates(allImages):
     count = 0
     coordinatedImages = []
+    errorList = []
     for image in allImages:
         try:
             response = requests.get(image.imageUrl)
@@ -281,8 +282,9 @@ def getCoordinates(allImages):
 
         except Exception as e:
             print("Error: ", e, "Error in ID: ", image.id)
+            errorList.append(image)
 
-    return coordinatedImages
+    return coordinatedImages, errorList
 
 def writeInfo(aWords, bWords, cWords, dWords, eWords):
     print("--- A ---")
@@ -324,11 +326,20 @@ def writeCsv(allImages):
         writer.writeheader()
         writer.writerows(datas)
 
-
+def writeErrors(errorList):
+    datas = []
+    for image in errorList:
+        datas.append({"Id": image.id, "ImageUrl": image.imageUrl})
+    with open("created_with_python_errors.csv", mode="a", newline='') as file:
+        fieldnames = ['Id', 'ImageUrl']
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(datas)
 
 
 if __name__ == "__main__":
     allImages = readCsv("datas/test_images.csv")
-    newImages = getCoordinates(allImages)
+    newImages, errorList = getCoordinates(allImages)
     writeCoordinates(newImages)
     writeCsv(newImages)
+    writeErrors(errorList)
